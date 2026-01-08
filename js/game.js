@@ -4,12 +4,21 @@
  * Game state data structure:
  * - difficulty: current difficulty setting
  * - board: Board instance
- * - status: 'idle' | 'playing' | 'won' | 'lost'
+ * - status: Game.STATUS.NOT_STARTED | IN_PROGRESS | WON | LOST
  * - startTime: timestamp when game started
  * - elapsedTime: seconds elapsed
  * - timerInterval: interval ID for timer
+ * - onStateChange: callback for state transitions
  */
 class Game {
+    // Game status constants
+    static STATUS = {
+        NOT_STARTED: 'not-started',
+        IN_PROGRESS: 'in-progress',
+        WON: 'won',
+        LOST: 'lost'
+    };
+
     // Difficulty configurations
     static DIFFICULTIES = {
         beginner: { rows: 9, cols: 9, mines: 10 },
@@ -17,13 +26,18 @@ class Game {
         expert: { rows: 16, cols: 30, mines: 99 }
     };
 
-    constructor() {
+    /**
+     * Create a new Game instance
+     * @param {function} onStateChange - optional callback(newStatus, oldStatus)
+     */
+    constructor(onStateChange = null) {
         this.difficulty = 'beginner';
         this.board = null;
-        this.status = 'idle';
+        this.status = Game.STATUS.NOT_STARTED;
         this.startTime = null;
         this.elapsedTime = 0;
         this.timerInterval = null;
+        this.onStateChange = onStateChange;
     }
 
     /**
@@ -35,9 +49,47 @@ class Game {
         this.difficulty = difficulty;
         const config = Game.DIFFICULTIES[difficulty];
         this.board = new Board(config.rows, config.cols, config.mines);
-        this.status = 'idle';
+        this.setStatus(Game.STATUS.NOT_STARTED);
         this.startTime = null;
         this.elapsedTime = 0;
+    }
+
+    /**
+     * Set game status and trigger callback
+     * @param {string} newStatus - new game status
+     */
+    setStatus(newStatus) {
+        const oldStatus = this.status;
+        if (oldStatus !== newStatus) {
+            this.status = newStatus;
+            if (this.onStateChange) {
+                this.onStateChange(newStatus, oldStatus);
+            }
+        }
+    }
+
+    /**
+     * Check if game is over (won or lost)
+     * @returns {boolean}
+     */
+    isGameOver() {
+        return this.status === Game.STATUS.WON || this.status === Game.STATUS.LOST;
+    }
+
+    /**
+     * Check if game is in progress
+     * @returns {boolean}
+     */
+    isPlaying() {
+        return this.status === Game.STATUS.IN_PROGRESS;
+    }
+
+    /**
+     * Check if game hasn't started yet
+     * @returns {boolean}
+     */
+    isNotStarted() {
+        return this.status === Game.STATUS.NOT_STARTED;
     }
 
     /**
@@ -47,7 +99,7 @@ class Game {
      * @returns {object} result with revealed cells and game status
      */
     handleClick(row, col) {
-        if (this.status === 'won' || this.status === 'lost') {
+        if (this.isGameOver()) {
             return { revealed: [], status: this.status };
         }
 
@@ -57,9 +109,9 @@ class Game {
         }
 
         // First click - place mines and start timer
-        if (this.status === 'idle') {
+        if (this.isNotStarted()) {
             this.board.placeMines(row, col);
-            this.status = 'playing';
+            this.setStatus(Game.STATUS.IN_PROGRESS);
             this.startTimer();
         }
 
@@ -68,7 +120,7 @@ class Game {
 
         // Check for mine hit
         if (cell.hasMine) {
-            this.status = 'lost';
+            this.setStatus(Game.STATUS.LOST);
             this.stopTimer();
             const mines = this.board.revealAllMines();
             return { revealed: mines, status: this.status, hitMine: cell };
@@ -76,7 +128,7 @@ class Game {
 
         // Check for win
         if (this.board.countUnrevealedSafe() === 0) {
-            this.status = 'won';
+            this.setStatus(Game.STATUS.WON);
             this.stopTimer();
         }
 
@@ -90,7 +142,7 @@ class Game {
      * @returns {object} result with cell and flag state
      */
     handleRightClick(row, col) {
-        if (this.status === 'won' || this.status === 'lost') {
+        if (this.isGameOver()) {
             return { cell: null, flagged: false };
         }
 

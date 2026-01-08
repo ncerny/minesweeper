@@ -12,8 +12,17 @@
     const timerEl = document.querySelector('#timer span');
     const statusEl = document.getElementById('game-status');
 
-    // Game instance
-    const game = new Game();
+    /**
+     * Handle game state changes
+     * @param {string} newStatus
+     * @param {string} oldStatus
+     */
+    function onGameStateChange(newStatus, oldStatus) {
+        updateStatusDisplay(newStatus);
+    }
+
+    // Game instance with state change callback
+    const game = new Game(onGameStateChange);
 
     /**
      * Initialize the game UI
@@ -139,16 +148,28 @@
         const state = game.getState();
         mineCountEl.textContent = state.remainingMines;
         timerEl.textContent = state.elapsedTime;
+        updateStatusDisplay(state.status);
+    }
 
-        switch (state.status) {
-            case 'won':
+    /**
+     * Update status display based on game state
+     * @param {string} status
+     */
+    function updateStatusDisplay(status) {
+        switch (status) {
+            case Game.STATUS.WON:
                 statusEl.textContent = '🎉 You Win!';
                 statusEl.className = 'win';
                 break;
-            case 'lost':
+            case Game.STATUS.LOST:
                 statusEl.textContent = '💥 Game Over';
                 statusEl.className = 'lose';
                 break;
+            case Game.STATUS.IN_PROGRESS:
+                statusEl.textContent = '';
+                statusEl.className = '';
+                break;
+            case Game.STATUS.NOT_STARTED:
             default:
                 statusEl.textContent = '';
                 statusEl.className = '';
