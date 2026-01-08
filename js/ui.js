@@ -31,6 +31,10 @@
     // Currently pressed cell (for animation)
     let pressedCell = null;
 
+    // Current focused cell for keyboard navigation
+    let focusedRow = 0;
+    let focusedCol = 0;
+
     /**
      * Initialize the game UI
      */
@@ -41,7 +45,125 @@
         // Global mouse up to reset face
         document.addEventListener('mouseup', handleGlobalMouseUp);
 
+        // Keyboard navigation
+        document.addEventListener('keydown', handleKeyDown);
+
         startNewGame();
+    }
+
+    /**
+     * Handle keyboard input
+     * @param {KeyboardEvent} e
+     */
+    function handleKeyDown(e) {
+        const board = game.board;
+        if (!board) return;
+
+        // Game controls
+        switch (e.key) {
+            case 'r':
+            case 'R':
+                startNewGame();
+                e.preventDefault();
+                return;
+            case '1':
+                difficultyEl.value = 'beginner';
+                startNewGame();
+                e.preventDefault();
+                return;
+            case '2':
+                difficultyEl.value = 'intermediate';
+                startNewGame();
+                e.preventDefault();
+                return;
+            case '3':
+                difficultyEl.value = 'expert';
+                startNewGame();
+                e.preventDefault();
+                return;
+        }
+
+        // Arrow key navigation
+        switch (e.key) {
+            case 'ArrowUp':
+                focusedRow = Math.max(0, focusedRow - 1);
+                updateFocusedCell();
+                e.preventDefault();
+                break;
+            case 'ArrowDown':
+                focusedRow = Math.min(board.rows - 1, focusedRow + 1);
+                updateFocusedCell();
+                e.preventDefault();
+                break;
+            case 'ArrowLeft':
+                focusedCol = Math.max(0, focusedCol - 1);
+                updateFocusedCell();
+                e.preventDefault();
+                break;
+            case 'ArrowRight':
+                focusedCol = Math.min(board.cols - 1, focusedCol + 1);
+                updateFocusedCell();
+                e.preventDefault();
+                break;
+            case 'Enter':
+                // Reveal cell
+                revealFocusedCell();
+                e.preventDefault();
+                break;
+            case ' ':
+                // Toggle flag
+                flagFocusedCell();
+                e.preventDefault();
+                break;
+        }
+    }
+
+    /**
+     * Update visual focus indicator on cell
+     */
+    function updateFocusedCell() {
+        // Remove focus from all cells
+        const allCells = boardEl.querySelectorAll('.cell');
+        allCells.forEach(cell => cell.classList.remove('focused'));
+
+        // Add focus to current cell
+        const cellEl = getCellElement(focusedRow, focusedCol);
+        if (cellEl) {
+            cellEl.classList.add('focused');
+            cellEl.focus();
+        }
+    }
+
+    /**
+     * Reveal the currently focused cell (keyboard action)
+     */
+    function revealFocusedCell() {
+        const result = game.handleClick(focusedRow, focusedCol);
+
+        for (const cell of result.revealed) {
+            updateCellDisplay(cell);
+        }
+
+        if (result.hitMine) {
+            const hitEl = getCellElement(result.hitMine.row, result.hitMine.col);
+            hitEl.classList.add('hit');
+            showWrongFlags();
+        }
+
+        updateStatus();
+    }
+
+    /**
+     * Toggle flag on currently focused cell (keyboard action)
+     */
+    function flagFocusedCell() {
+        const result = game.handleRightClick(focusedRow, focusedCol);
+
+        if (result.cell) {
+            updateCellDisplay(result.cell);
+        }
+
+        updateStatus();
     }
 
     /**
@@ -50,6 +172,8 @@
     function startNewGame() {
         const difficulty = difficultyEl.value;
         game.newGame(difficulty);
+        focusedRow = 0;
+        focusedCol = 0;
         renderBoard();
         updateStatus();
         updateFace(FACE.playing);
@@ -71,6 +195,7 @@
                 cellEl.dataset.col = col;
                 cellEl.setAttribute('role', 'gridcell');
                 cellEl.setAttribute('aria-label', `Row ${row + 1}, Column ${col + 1}, hidden`);
+                cellEl.setAttribute('tabindex', '0');
 
                 cellEl.addEventListener('click', handleCellClick);
                 cellEl.addEventListener('contextmenu', handleCellRightClick);

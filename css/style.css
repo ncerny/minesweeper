@@ -271,6 +271,38 @@ select:active, button:active {
     background: var(--cell-revealed);
 }
 
+/* Keyboard focus indicator */
+.cell.focused {
+    outline: 2px solid #0066cc;
+    outline-offset: -2px;
+    z-index: 1;
+}
+
+.cell:focus {
+    outline: 2px solid #0066cc;
+    outline-offset: -2px;
+}
+
+/* Animations */
+.cell {
+    transition: background-color 0.1s ease-out, border-color 0.1s ease-out;
+}
+
+.cell.revealed {
+    animation: reveal 0.15s ease-out;
+}
+
+@keyframes reveal {
+    0% {
+        transform: scale(0.95);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
 /* Number colors */
 .cell.adjacent-1 { color: var(--num-1); }
 .cell.adjacent-2 { color: var(--num-2); }
