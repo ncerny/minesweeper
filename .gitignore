@@ -1,0 +1,5 @@
+# Runtime directories
+.runtime/
+
+# Claude Code local settings
+.claude/
