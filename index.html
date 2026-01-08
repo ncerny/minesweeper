@@ -12,21 +12,23 @@
             <h1>Minesweeper</h1>
             <div id="controls">
                 <select id="difficulty">
-                    <option value="beginner">Beginner (9x9, 10 mines)</option>
-                    <option value="intermediate">Intermediate (16x16, 40 mines)</option>
-                    <option value="expert">Expert (16x30, 99 mines)</option>
+                    <option value="beginner">Beginner (9x9)</option>
+                    <option value="intermediate">Intermediate (16x16)</option>
+                    <option value="expert">Expert (16x30)</option>
                 </select>
-                <button id="new-game">New Game</button>
             </div>
         </header>
 
         <div id="status-bar">
-            <div id="mine-count">Mines: <span>0</span></div>
-            <div id="timer">Time: <span>0</span></div>
-            <div id="game-status"></div>
+            <div id="mine-count"><span>010</span></div>
+            <button id="face-btn" title="New Game">😊</button>
+            <div id="timer"><span>000</span></div>
         </div>
 
-        <div id="board"></div>
+        <div id="board" role="grid" aria-label="Minesweeper game board"></div>
+
+        <button id="new-game" style="display:none;">New Game</button>
+        <div id="game-status" aria-live="polite"></div>
     </div>
 
     <script src="js/cell.js"></script>
